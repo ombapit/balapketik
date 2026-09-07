@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -117,6 +117,7 @@ export default function RacePage() {
   }, [race, id, currentUser.id])
 
   const target = race?.song_texts?.text_content ?? ''
+  const isPractice = race?.rooms?.max_players === 1
   const progress = target ? Math.min(100, Math.round(value.length / target.length * 100)) : 0
   const accuracy = useMemo(() => {
     if (!typingStats.total) return 100
@@ -179,10 +180,10 @@ export default function RacePage() {
   return (
     <main className="content race-page">
       <div className="race-top">
-        <div><p className="eyebrow">RACE SEDANG BERLANGSUNG</p><h1>{race.song_texts.title}</h1><p>{race.song_texts.artist}</p></div>
+        <div><p className="eyebrow">{isPractice ? 'LATIHAN SOLO' : 'RACE SEDANG BERLANGSUNG'}</p><h1>{race.song_texts.title}</h1><p>{isPractice ? 'Asah kecepatan jarimu' : race.song_texts.artist}</p></div>
         <div className="countdown">{countdown > 0 ? countdown : 'GO!'}</div>
         <div className="race-metrics"><strong>{wpm}<small>WPM</small></strong><strong>{accuracy}%<small>AKURASI</small></strong><strong>{progress}%<small>PROGRES</small></strong></div>
-        {done && <div className="race-nav-actions"><button className="primary" onClick={() => router.push(`/room/${race.rooms.code}`)}>Tanding lagi</button><button className="secondary" onClick={() => router.push('/')}>Dashboard</button></div>}
+        {done && <div className="race-nav-actions"><button className="primary" onClick={() => router.push(isPractice ? '/practice' : `/room/${race.rooms.code}`)}>{isPractice ? 'Latihan lagi' : 'Tanding lagi'}</button><button className="secondary" onClick={() => router.push('/')}>Dashboard</button></div>}
       </div>
       <div className="panel race-card">
         <p className="race-copy">{target.split('').map((char: string, index: number) => <span className={index < value.length ? (value[index] === char ? 'correct' : 'wrong') : ''} key={index}>{char}</span>)}</p>
@@ -191,11 +192,11 @@ export default function RacePage() {
         <div className="race-lanes">
           <Kart label="Kamu" progress={progress} own />
           {Object.entries(opponents).map(([userId, opponent]) => <Kart key={userId} label={opponent.name} progress={opponent.progress} />)}
-          {!Object.keys(opponents).length && <p className="opponent-hint">Mobil peserta lain akan muncul di sini saat mereka mulai mengetik.</p>}
+          {!isPractice && !Object.keys(opponents).length && <p className="opponent-hint">Mobil peserta lain akan muncul di sini saat mereka mulai mengetik.</p>}
         </div>
 
       </div>
-      {done && finalResult && showFinishDialog && <div className="finish-modal" role="dialog" aria-modal="true" aria-label="Hasil race"><div className="finish-alert"><button className="finish-close" onClick={() => setShowFinishDialog(false)} aria-label="Tutup hasil">×</button><span className="finish-check">✓</span><div><p className="eyebrow">FINISH · HASIL TERSIMPAN</p><h2>Teks sempurna. Keren!</h2><p>{finalResult.wpm} WPM · {finalResult.accuracy}% akurasi</p><button className="primary" onClick={() => router.push(`/room/${race.rooms.code}`)}>Tanding lagi →</button></div></div></div>}    </main>
+      {done && finalResult && showFinishDialog && <div className="finish-modal" role="dialog" aria-modal="true" aria-label="Hasil race"><div className="finish-alert"><button className="finish-close" onClick={() => setShowFinishDialog(false)} aria-label="Tutup hasil">×</button><span className="finish-check">✓</span><div><p className="eyebrow">FINISH · HASIL TERSIMPAN</p><h2>Teks sempurna. Keren!</h2><p>{finalResult.wpm} WPM · {finalResult.accuracy}% akurasi</p><button className="primary" onClick={() => router.push(isPractice ? '/practice' : `/room/${race.rooms.code}`)}>{isPractice ? 'Latihan lagi' : 'Tanding lagi'} →</button></div></div></div>}    </main>
   )
 }
 

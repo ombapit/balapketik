@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 function client(request: Request) { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { global: { headers: { Authorization: request.headers.get('authorization') ?? '' } } }) }
@@ -8,12 +8,13 @@ export async function POST(request: Request) {
   const db = client(request); const { data: { user } } = await db.auth.getUser(); if (!user) return NextResponse.json({ error: 'Login diperlukan.' }, { status: 401 })
   const body = await request.json(); const wpm = Number(body.wpm); const accuracy = Number(body.accuracy); const elapsedMs = Number(body.elapsedMs)
   if (!body.raceId || !Number.isFinite(wpm) || !Number.isFinite(accuracy) || wpm < 0 || accuracy < 0 || accuracy > 100) return NextResponse.json({ error: 'Data hasil race tidak valid.' }, { status: 400 })
-  const { data: race } = await db.from('races').select('id,room_id,status').eq('id', body.raceId).single(); if (!race) return NextResponse.json({ error: 'Race tidak ditemukan.' }, { status: 404 })
+  const { data: race } = await db.from('races').select('id,room_id,status,rooms(max_players)').eq('id', body.raceId).single(); if (!race) return NextResponse.json({ error: 'Race tidak ditemukan.' }, { status: 404 })
   const { data: previous } = await db.from('race_results').select('id').eq('race_id', body.raceId).eq('user_id', user.id).maybeSingle(); if (previous) return NextResponse.json({ error: 'Hasil race sudah tersimpan.' }, { status: 409 })
   const { data, error } = await db.from('race_results').insert({ race_id: body.raceId, user_id: user.id, wpm, accuracy, elapsed_ms: elapsedMs, is_valid: true }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   await db.from('races').update({ status: 'finished', ended_at: new Date().toISOString() }).eq('id', race.id).eq('status', 'racing')
-  await db.from('rooms').update({ status: 'lobby', started_at: null }).eq('id', race.room_id)
+  const isPractice = (Array.isArray(race.rooms) ? race.rooms[0] : race.rooms)?.max_players === 1
+  await db.from('rooms').update(isPractice ? { status: 'closed', closed_at: new Date().toISOString() } : { status: 'lobby', started_at: null }).eq('id', race.room_id)
   return NextResponse.json({ result: data })
 }
 
