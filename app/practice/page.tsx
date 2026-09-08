@@ -33,5 +33,10 @@ export default function PracticePage() {
     } finally { setLoading(false) }
   }
 
+  useEffect(() => {
+    if (!ready || loading || !window.sessionStorage.getItem('balapketik-autostart')) return
+    window.sessionStorage.removeItem('balapketik-autostart')
+    startPractice()
+  }, [ready])
   return <main className="practice-page"><section className="practice-hero"><a href="/" className="practice-back">← Dashboard</a><p className="eyebrow">MODE LATIHAN</p><h1>Asah jari.<br /><em>Kejar WPM-mu.</em></h1><p className="practice-copy">Main sendiri dengan teks lagu Indonesia acak. Hasilnya tetap masuk ke statistik dan leaderboard kamu.</p><div className="practice-kart" aria-hidden="true"><span>🏎️</span><i>──────────── ⚑</i></div><button className="primary practice-start" disabled={loading} onClick={startPractice}>{loading && <span className="button-spinner" />} {loading ? 'Menyiapkan lintasan...' : ready ? 'Mulai typing test →' : 'Login untuk mulai →'}</button>{error && <p className="practice-error">{error}</p>}<div className="practice-points"><span>♫ Teks lagu acak</span><span>✓ Hasil tersimpan</span><span>⌁ Tanpa menunggu lawan</span></div><p className="practice-greeting">Siap latihan, {name}?</p></section></main>
 }

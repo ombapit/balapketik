@@ -45,6 +45,7 @@ export default function RacePage() {
   const [done, setDone] = useState(false)
   const [finalResult, setFinalResult] = useState<{ wpm: number; accuracy: number } | null>(null)
   const [showFinishDialog, setShowFinishDialog] = useState(false)
+  const [nextPracticeIn, setNextPracticeIn] = useState<number | null>(null)
   const [error, setError] = useState('')
   const countdown = race ? Math.max(0, Math.ceil((new Date(race.started_at).getTime() - now) / 1000)) : 0
 
@@ -119,6 +120,17 @@ export default function RacePage() {
   const target = race?.song_texts?.text_content ?? ''
   const isPractice = race?.rooms?.max_players === 1
   const progress = target ? Math.min(100, Math.round(value.length / target.length * 100)) : 0
+
+  useEffect(() => {
+    if (!done || !isPractice || nextPracticeIn === null) return
+    if (nextPracticeIn === 0) {
+      window.sessionStorage.setItem('balapketik-autostart', '1')
+      router.replace('/practice')
+      return
+    }
+    const timer = window.setTimeout(() => setNextPracticeIn(seconds => seconds === null ? null : seconds - 1), 1000)
+    return () => window.clearTimeout(timer)
+  }, [done, isPractice, nextPracticeIn, router])
   const accuracy = useMemo(() => {
     if (!typingStats.total) return 100
     return Math.round(Math.max(0, (typingStats.total - typingStats.mistakes) / typingStats.total) * 1000) / 10
@@ -173,6 +185,7 @@ export default function RacePage() {
     }
     setFinalResult({ wpm: finalWpm, accuracy: finalAccuracy })
     setShowFinishDialog(true)
+    if (isPractice) setNextPracticeIn(3)
   }
   if (error) return <main className="content"><div className="panel"><h1>{error}</h1><a href="/">Kembali</a></div></main>
   if (!race) return <main className="content"><LoadingSkeleton variant="race" label="Menyiapkan lintasan dan peserta..." /></main>
@@ -196,7 +209,7 @@ export default function RacePage() {
         </div>
 
       </div>
-      {done && finalResult && showFinishDialog && <div className="finish-modal" role="dialog" aria-modal="true" aria-label="Hasil race"><div className="finish-alert"><button className="finish-close" onClick={() => setShowFinishDialog(false)} aria-label="Tutup hasil">×</button><span className="finish-check">✓</span><div><p className="eyebrow">FINISH · HASIL TERSIMPAN</p><h2>Teks sempurna. Keren!</h2><p>{finalResult.wpm} WPM · {finalResult.accuracy}% akurasi</p><button className="primary" onClick={() => router.push(isPractice ? '/practice' : `/room/${race.rooms.code}`)}>{isPractice ? 'Latihan lagi' : 'Tanding lagi'} →</button></div></div></div>}    </main>
+      {done && finalResult && showFinishDialog && <div className="finish-modal" role="dialog" aria-modal="true" aria-label="Hasil race"><div className="finish-alert"><button className="finish-close" onClick={() => setShowFinishDialog(false)} aria-label="Tutup hasil">×</button><span className="finish-check">✓</span><div><p className="eyebrow">FINISH · HASIL TERSIMPAN</p><h2>Teks sempurna. Keren!</h2><p>{finalResult.wpm} WPM · {finalResult.accuracy}% akurasi</p><button className="primary" onClick={() => router.push(isPractice ? '/practice' : `/room/${race.rooms.code}`)}>{isPractice ? (nextPracticeIn === null ? 'Latihan lagi' : 'Putaran berikutnya ' + nextPracticeIn + '...') : 'Tanding lagi'} →</button></div></div></div>}    </main>
   )
 }
 

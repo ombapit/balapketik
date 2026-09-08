@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 function db(request: Request) { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { global: { headers: { Authorization: request.headers.get('authorization') ?? '' } } }) }
@@ -36,7 +36,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: true, left: true })
   }
   if (room.host_id !== user.id) return NextResponse.json({ error: 'Hanya host yang dapat menutup room.' }, { status: 403 })
-  const { error } = await supabase.from('rooms').update({ status: 'closed', closed_at: new Date().toISOString() }).eq('id', roomId)
+  const { error } = await supabase.from('rooms').update({ status: 'closed' }).eq('id', roomId)
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ ok: true, closed: true })
 }

@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   await db.from('races').update({ status: 'finished', ended_at: new Date().toISOString() }).eq('id', race.id).eq('status', 'racing')
   const isPractice = (Array.isArray(race.rooms) ? race.rooms[0] : race.rooms)?.max_players === 1
-  await db.from('rooms').update(isPractice ? { status: 'closed', closed_at: new Date().toISOString() } : { status: 'lobby', started_at: null }).eq('id', race.room_id)
+  await db.from('rooms').update(isPractice ? { status: 'closed' } : { status: 'lobby' }).eq('id', race.room_id)
   return NextResponse.json({ result: data })
 }
 

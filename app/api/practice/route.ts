@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
   const { data: race, error: raceError } = await db.from('races').insert({ room_id: room.id, song_text_id: song.id, status: 'racing', started_at: startsAt }).select('id').single()
   if (raceError || !race) {
-    await db.from('rooms').update({ status: 'closed', closed_at: new Date().toISOString() }).eq('id', room.id)
+    await db.from('rooms').update({ status: 'closed' }).eq('id', room.id)
     return NextResponse.json({ error: raceError?.message || 'Gagal membuat latihan.' }, { status: 400 })
   }
   return NextResponse.json({ raceId: race.id })

@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
@@ -16,6 +16,6 @@ export async function POST(request: Request) {
   const song = choices[Math.floor(Math.random() * choices.length)]
   const startsAt = new Date(Date.now() + 10000).toISOString(); const { data: race, error } = await supabase.from('races').insert({ room_id: roomId, song_text_id: song.id, status: 'racing', started_at: startsAt }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  await supabase.from('rooms').update({ status: 'racing', started_at: startsAt }).eq('id', roomId)
+  await supabase.from('rooms').update({ status: 'racing' }).eq('id', roomId)
   return NextResponse.json({ race, startsAt })
 }
